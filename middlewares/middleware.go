@@ -9,12 +9,12 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func SetMiddlewareJSON(next fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return func(ctx *fasthttp.RequestCtx) {
-		ctx.Response.Header.Set("Content-Type", "application/json")
-		next(ctx)
-	}
-}
+// func SetMiddlewareJSON(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+// 	return func(ctx *fasthttp.RequestCtx) {
+// 		ctx.Response.Header.Set("Content-Type", "application/json")
+// 		next(ctx)
+// 	}
+// }
 
 func SetMiddlewareAuthentication(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {

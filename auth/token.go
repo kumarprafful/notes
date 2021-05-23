@@ -15,6 +15,30 @@ import (
 
 var SECRET string = os.Getenv("SECRET")
 
+func GenerateTokenPair(userID uint32) (map[string]string, error) {
+	claims := jwt.MapClaims{}
+	claims["authorized"] = true
+	claims["user_id"] = userID
+	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	access_token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	at, err := access_token.SignedString([]byte(SECRET))
+	if err != nil {
+		return nil, err
+	}
+
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	refresh_token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	rt, err := refresh_token.SignedString([]byte(SECRET))
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"access_token":  at,
+		"refresh_token": rt,
+	}, nil
+}
+
 func CreateToken(userID uint32) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
@@ -42,11 +66,6 @@ func TokenValid(ctx *fasthttp.RequestCtx) error {
 }
 
 func ExtractToken(ctx *fasthttp.RequestCtx) string {
-	// keys := ctx.QueryArgs()
-	// token := keys.Get("token")
-	// if token != "" {
-	// 	return token
-	// }
 	bearerToken := string(ctx.Request.Header.Peek("Authorization"))
 	if len(strings.Split(bearerToken, "")) == 2 {
 		return strings.Split(bearerToken, " ")[1]

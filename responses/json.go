@@ -9,6 +9,7 @@ import (
 )
 
 func JSON(ctx *fasthttp.RequestCtx, statusCode int, data interface{}) {
+	ctx.Response.Header.Set("Content-Type", "application/json")
 	ctx.SetStatusCode(statusCode)
 	err := json.NewEncoder(ctx).Encode(data)
 	if err != nil {

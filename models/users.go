@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"html"
 	"strings"
 	"time"
@@ -11,11 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-type TimeStamped struct {
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-}
 
 type User struct {
 	ID        uint32    `gorm:"primary_key;auto_increment" json:"id"`
@@ -53,6 +47,24 @@ func (u *User) Prepare() {
 
 func (u *User) Validate(action string) error {
 	switch strings.ToLower(action) {
+	case "register":
+		if u.Username == "" {
+			return errors.New("username is required")
+		}
+		if u.Email == "" {
+			return errors.New("email is required")
+		}
+		if u.Password == "" {
+			return errors.New("password is required")
+		}
+		if err := checkmail.ValidateFormat(u.Email); err != nil {
+			return errors.New("invalid email")
+		}
+		if u.Password != "" {
+			u.MakePassword()
+		}
+		return nil
+
 	default:
 		if u.Username == "" {
 			return errors.New("username is required")
@@ -71,7 +83,6 @@ func (u *User) Validate(action string) error {
 }
 
 func (u *User) SaveUser(db *gorm.DB) (*User, error) {
-	fmt.Println(&u)
 	if err := db.Debug().Create(&u).Error; err != nil {
 		return &User{}, err
 	}
@@ -90,8 +101,7 @@ func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 }
 
 func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
-	var err error
-	err = db.Debug().Model(User{}).Where("id=?", uid).Take(&u).Error
+	err := db.Debug().Model(User{}).Where("id=?", uid).Take(&u).Error
 	if err != nil {
 		return &User{}, err
 	}

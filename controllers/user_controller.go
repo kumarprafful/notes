@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"notes/auth"
 	"notes/formaterror"
 	"notes/models"
 	"notes/responses"
@@ -12,7 +12,6 @@ import (
 )
 
 func (s *Server) Register(ctx *fasthttp.RequestCtx) {
-	fmt.Println("asdad", s)
 	user := models.User{}
 	err := json.Unmarshal(ctx.Request.Body(), &user)
 	if err != nil {
@@ -20,7 +19,7 @@ func (s *Server) Register(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	user.Prepare()
-	err = user.Validate("")
+	err = user.Validate("register")
 	if err != nil {
 		responses.ERROR(ctx, http.StatusUnprocessableEntity, err)
 		return
@@ -31,7 +30,8 @@ func (s *Server) Register(ctx *fasthttp.RequestCtx) {
 		responses.ERROR(ctx, http.StatusBadRequest, formattedError)
 		return
 	}
-	responses.JSON(ctx, http.StatusCreated, userCreated)
+	tokens, _ := auth.GenerateTokenPair(userCreated.ID)
+	responses.JSON(ctx, http.StatusCreated, tokens)
 }
 
 func (s *Server) GetUsers(ctx *fasthttp.RequestCtx) {
@@ -43,4 +43,15 @@ func (s *Server) GetUsers(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	responses.JSON(ctx, http.StatusOK, users)
+}
+
+func (s *Server) GetUserByID(ctx *fasthttp.RequestCtx) {
+	id, _ := ctx.QueryArgs().GetUint("id")
+	u := models.User{}
+	user, err := u.FindUserByID(s.DB, uint32(id))
+	if err != nil {
+		responses.ERROR(ctx, http.StatusBadRequest, err)
+		return
+	}
+	responses.JSON(ctx, http.StatusOK, user)
 }

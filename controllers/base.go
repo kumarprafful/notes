@@ -22,5 +22,9 @@ func (s *Server) DBConnect() {
 		panic("failed to connect to DB")
 	}
 
-	s.DB.AutoMigrate(&models.User{})
+	s.DB.AutoMigrate(
+		&models.User{},
+		&models.Note{},
+		&models.Content{},
+	)
 }
