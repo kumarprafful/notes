@@ -39,6 +39,21 @@ func GenerateTokenPair(userID uint32) (map[string]string, error) {
 	}, nil
 }
 
+func GenerateAccessFromRefreshToken(token string) (map[string]string, error) {
+	userID, err := ExtractIDFromToken(token)
+	if err != nil {
+		return nil, err
+	}
+	token, err = CreateToken(userID)
+	if err != nil {
+		return nil, err
+	}
+	tokens := map[string]string{
+		"access_token": token,
+	}
+	return tokens, nil
+}
+
 func CreateToken(userID uint32) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
@@ -67,7 +82,7 @@ func TokenValid(ctx *fasthttp.RequestCtx) error {
 
 func ExtractToken(ctx *fasthttp.RequestCtx) string {
 	bearerToken := string(ctx.Request.Header.Peek("Authorization"))
-	if len(strings.Split(bearerToken, "")) == 2 {
+	if len(strings.Split(bearerToken, " ")) == 2 {
 		return strings.Split(bearerToken, " ")[1]
 	}
 	return ""
@@ -75,6 +90,14 @@ func ExtractToken(ctx *fasthttp.RequestCtx) string {
 
 func ExtractTokenID(ctx *fasthttp.RequestCtx) (uint32, error) {
 	tokenString := ExtractToken(ctx)
+	id, err := ExtractIDFromToken(tokenString)
+	if err != nil {
+		return 0, err
+	}
+	return id, err
+}
+
+func ExtractIDFromToken(tokenString string) (uint32, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

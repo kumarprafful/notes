@@ -25,7 +25,11 @@ func Hash(password string) ([]byte, error) {
 }
 
 func VerifyPassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return errors.New("incorrect Password")
+	}
+	return nil
 }
 
 func (u *User) MakePassword() error {
@@ -64,7 +68,20 @@ func (u *User) Validate(action string) error {
 			u.MakePassword()
 		}
 		return nil
-
+	case "login":
+		if u.Email == "" {
+			return errors.New("email is required")
+		}
+		if err := checkmail.ValidateFormat(u.Email); err != nil {
+			return errors.New("invalid email")
+		}
+		if u.Password == "" {
+			return errors.New("password is required")
+		}
+		if u.Password != "" {
+			u.MakePassword()
+		}
+		return nil
 	default:
 		if u.Username == "" {
 			return errors.New("username is required")
@@ -102,6 +119,17 @@ func (u *User) FindAllUsers(db *gorm.DB) (*[]User, error) {
 
 func (u *User) FindUserByID(db *gorm.DB, uid uint32) (*User, error) {
 	err := db.Debug().Model(User{}).Where("id=?", uid).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return &User{}, errors.New("user not found")
+	}
+	return u, err
+}
+
+func (u *User) FindUserByEmail(db *gorm.DB, email string) (*User, error) {
+	err := db.Debug().Model(User{}).Where("email=?", email).Take(&u).Error
 	if err != nil {
 		return &User{}, err
 	}
