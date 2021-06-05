@@ -82,7 +82,23 @@ func (s *Server) FetchANote(ctx *fasthttp.RequestCtx) {
 	responses.JSON(ctx, http.StatusOK, note)
 }
 
-func (s *Server) FetchContentOfNote(ctx *fasthttp.RequestCtx) {
+func (s *Server) FetchNotesOfAUser(ctx *fasthttp.RequestCtx) {
+	user_id, err := auth.ExtractTokenID(ctx)
+	fmt.Println(user_id)
+	n := models.Note{}
+	if err != nil {
+		responses.ERROR(ctx, http.StatusBadRequest, err)
+		return
+	}
+	notes, err := n.GetNotesOfAUser(s.DB, user_id)
+	if err != nil {
+		responses.ERROR(ctx, http.StatusBadRequest, err)
+		return
+	}
+	responses.JSON(ctx, http.StatusOK, notes)
+}
+
+func (s *Server) FetchContentsOfNote(ctx *fasthttp.RequestCtx) {
 	note_id, err := ctx.QueryArgs().GetUint("note_id")
 	if err != nil {
 		responses.ERROR(ctx, http.StatusBadRequest, errors.New("note_id is invalid or not provided"))

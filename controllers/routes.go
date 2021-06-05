@@ -14,10 +14,13 @@ func (s Server) Router() *router.Router {
 
 	r.GET("/users/", s.GetUsers)
 	r.GET("/user/", s.GetUserByID)
+
+	r.GET("/notes/", middlewares.CORS(middlewares.SetMiddlewareAuthentication(s.FetchNotesOfAUser)))
 	r.POST("/note/", middlewares.SetMiddlewareAuthentication(s.CreateANote))
 	r.GET("/note/", middlewares.SetMiddlewareAuthentication(s.FetchANote))
+
 	r.POST("/note/content/", middlewares.SetMiddlewareAuthentication(s.CreateContent))
-	r.GET("/note/content/list/", middlewares.SetMiddlewareAuthentication(s.FetchContentOfNote))
+	r.GET("/note/content/list/", middlewares.SetMiddlewareAuthentication(s.FetchContentsOfNote))
 
 	return r
 }

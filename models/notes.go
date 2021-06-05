@@ -15,6 +15,7 @@ type Note struct {
 	User      User      `json:"user"`
 	UserID    uint32    `gorm:"not null" json:"user_id"`
 	Title     string    `gorm:"size:255" json:"title"`
+	Preview   string    `gorm:"<-:false" json:"preview"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
@@ -111,18 +112,30 @@ func (c *Content) SaveContent(db *gorm.DB) (*Content, error) {
 	return c, nil
 }
 
+func (n *Note) GetNotesOfAUser(db *gorm.DB, user_id uint32) (*[]serializers.NoteSerializer, error) {
+	notes := []serializers.NoteSerializer{}
+	err := db.Debug().Model(&Note{}).Where("user_id=?", user_id).Order("updated_at desc").Limit(100).Find(&notes).Error
+	if err != nil {
+		return nil, err
+	}
+	return &notes, err
+}
+
 func (n *Note) GetNoteByID(db *gorm.DB, note_id uint32) (*serializers.NoteSerializer, error) {
 	note := serializers.NoteSerializer{}
+	content := serializers.ContentSerializer{}
 	err := db.Debug().Model(&Note{}).Where("id = ?", note_id).Find(&note).Error
 	if err != nil {
 		return nil, err
 	}
+	db.Debug().Model(&Content{}).Where("note_id=?", note_id).Order("created_at").Limit(1).Find(&content)
+	note.Preview = content.Text[:50]
 	return &note, nil
 }
 
 func (n *Note) ContentsOfNotes(db *gorm.DB, note_id uint32) (*[]serializers.ContentSerializer, error) {
 	contents := []serializers.ContentSerializer{}
-	err := db.Debug().Model(&Content{}).Where("note_id=?", note_id).Limit(100).Find(&contents).Error
+	err := db.Debug().Model(&Content{}).Where("note_id=?", note_id).Order("created_at").Limit(100).Find(&contents).Error
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"notes/controllers"
+	"notes/middlewares"
 
 	"github.com/valyala/fasthttp"
 )
@@ -12,5 +13,5 @@ func main() {
 	s.DBConnect()
 	r := s.Router()
 
-	log.Fatal(fasthttp.ListenAndServe(":3000", r.Handler))
+	log.Fatal(fasthttp.ListenAndServe(":3000", middlewares.CORS(r.Handler)))
 }
