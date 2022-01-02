@@ -129,7 +129,11 @@ func (n *Note) GetNoteByID(db *gorm.DB, note_id uint32) (*serializers.NoteSerial
 		return nil, err
 	}
 	db.Debug().Model(&Content{}).Where("note_id=?", note_id).Order("created_at").Limit(1).Find(&content)
-	note.Preview = content.Text[:50]
+	if len(content.Text) > 50 {
+		note.Preview = content.Text[:50]
+	} else {
+		note.Preview = content.Text
+	}
 	return &note, nil
 }
 

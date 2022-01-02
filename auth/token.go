@@ -19,7 +19,7 @@ func GenerateTokenPair(userID uint32) (map[string]string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = userID
-	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 300).Unix()
 	access_token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	at, err := access_token.SignedString([]byte(SECRET))
 	if err != nil {
